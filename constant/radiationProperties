@@ -1,0 +1,139 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      radiationProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+radiation       on;
+
+radiationModel  solarLoad;
+
+solarLoadCoeffs
+{
+    //For the Sun direction:
+    //1) SunDirConstant : the direction is given in 'sunDirection'
+    sunDirectionModel   sunDirConstant;
+    sunDirection        (-1 0.7 -1.5);
+
+    /*2) SunDirTracking : the direction is calculated from the following
+        parameters:
+             localStandardMeridian : GMT (Local Zone Meridian) in hours
+             startDay :  day from 1 to 365)
+             startTime:  in hours
+             longitude:  in degrees
+             latitude:   in degrees
+             gridUp:     grid orientation upwards
+             gridEast    grid orientation eastwards
+
+         This model should be use in transient calculations.
+         The keyword 'sunTrackingUpdateInterval' (in hours) specifies on which
+         interval is the Sun direction updated.*/
+
+    //sunDirectionModel   SunDirTracking;
+    localStandardMeridian   -8;     // GMT offset (hours)
+    startDay                22;     // day of the year
+    startTime               10;     // time of the day (hours decimal)
+
+    longitude               -118.243683;    // longitude (degrees)
+    latitude                34.052235;      // latitude (degrees)
+
+    // Grid orientation
+    gridUp                  (0 0 1);
+    gridEast                (0 1 0);
+
+    // Energy spectrum
+    spectralDistribution (2 1);
+
+    //Solar Load models available:
+    /*1) SunLoadConstant: direct and diffusive heat fluxes are provided by the
+        entries 'directSolarRad' and 'diffuseSolarRad'*/
+    //sunLoadModel SunLoadConstant;
+    //directSolarRad  500;
+    //diffuseSolarRad 40;
+
+    /*2) SunLoadFairWeatherConditions: The solar fluxes are calculated following
+        the Fair Weather Conditions Method from the ASHRAE Handbook. The entries
+        are:
+             skyCloudCoverFraction: Fraction of sky covered by clouds (0-1)
+             A :     Apparent solar irradiation at air mass m = 0
+             B :     Atmospheric extinction coefficient
+             beta:   Solar altitude (in degrees) above the horizontal. This
+             can be read or calculated providing the respective parameters
+             for Sun position explained above.
+             groundReflectivity : ground reflectivity
+
+             In this model the flux is calculated as:
+
+                 directSolarRad =
+                     (1 - 0.75*skyCloudCoverFraction^3)*A/exp(B/sin(beta));*/
+
+
+    sunLoadModel sunLoadFairWeatherConditions;
+    skyCloudCoverFraction 0;
+    A       2229.78119355;       // Apparent solar irradiation at air mass m = 0
+    B       0.142064516129;      // Atmospheric extinction coefficient
+    // Calculate beta from the Solar calculator or input
+    //beta    45;       // Solar altitude (in degrees) above the horizontal
+    // Ground reflectivity
+    groundReflectivity 0.2;
+
+    /*3) SunLoadTheoreticalMaximum: The entries are:
+             Setrn
+             SunPrime:
+             groundReflectivity : ground reflectivity
+
+             In this model the flux is calculated as:
+
+                 directSolarRad = Setrn*SunPrime;
+
+     The diffuse on vertical/horizontal walls and ground-reflected radiation are
+     calculated following the ASHRAE Handbook.*/
+
+    //sunLoadModel SunLoadTheoreticalMaximum;
+    //Setrn       10;
+    //SunPrime    1;
+    // Ground reflectivity
+    //groundReflectivity 0.2;
+    // Solar diffusivity constants
+    C       0.058064516129;  // Model constant
+
+    // Radiative flux coupling flags
+    solidCoupled    false;  // Couple through Qr the solid regions (default true)
+    wallCoupled     true;  // Couple through Qr wall patches (default false)
+
+        // Reflecting rays
+        useReflectedRays true;
+        reflecting
+        {
+            nPhi        10;
+            nTheta      10;
+        }
+
+    absorptionEmissionModel none;
+    scatterModel            none;
+    sootModel               none;
+
+}
+
+// Number of flow iterations per radiation iteration
+solverFreq 1;
+
+absorptionEmissionModel none;
+
+scatterModel    none;
+
+sootModel       none;
+
+
+// ************************************************************************* //
